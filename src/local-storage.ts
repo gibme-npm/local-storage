@@ -28,10 +28,19 @@ const localStorageAvailable = !!(global && global.localStorage);
 /** @ignore */
 const events = new EventEmitter();
 
-/** @ignore */
-export type Callback<TYPE = any> = (value: TYPE | undefined, old: TYPE | undefined, url: string) => void;
+/**
+ * Defines a StorageCallback for certain storage events
+ */
+export type StorageCallback<TYPE = any> = (oldValue: TYPE | undefined, newValue: TYPE | undefined, url: string) => void;
 
-export default class LocalStorage {
+export default abstract class LocalStorage {
+    /**
+     * Returns if the module is using a browser's [localStorage](https://www.w3schools.com/html/html5_webstorage.asp)
+     */
+    public static get isBrowserLocalStorage (): boolean {
+        return localStorageAvailable;
+    }
+
     /**
      * Returns the current local storage path if not browser
      */
@@ -51,6 +60,15 @@ export default class LocalStorage {
     }
 
     /**
+     * Returns the underlying key ID for the specified key
+     *
+     * @param key
+     */
+    public static id (key: string): string {
+        return localStorageAvailable ? key : FileStorage.id(key);
+    }
+
+    /**
      * Clears the local storage
      */
     public static clear () {
@@ -62,8 +80,8 @@ export default class LocalStorage {
      *
      * @param key
      */
-    public static has (key: string): boolean {
-        return typeof LocalStorage.get(key) !== 'undefined';
+    public static has<Type = any> (key: string): boolean {
+        return typeof LocalStorage.get<Type>(key) !== 'undefined';
     }
 
     /**
@@ -71,7 +89,7 @@ export default class LocalStorage {
      * @param key
      */
     public static get<Type = any> (key: string): Type | undefined {
-        return localStorageAvailable ? ls.get(key) : FileStorage.getItem(key);
+        return localStorageAvailable ? ls.get<Type>(key) : FileStorage.getItem<Type>(key);
     }
 
     /**
@@ -82,40 +100,40 @@ export default class LocalStorage {
      * url: the url for the tab where the modification came from
      *
      * @param key
-     * @param callback
+     * @param StorageCallback
      */
-    public static off<Type = any> (key: string, callback: Callback<Type>): void {
-        events.off(key, callback);
+    public static off<Type = any> (key: string, StorageCallback: StorageCallback<Type>): void {
+        events.off(key, StorageCallback);
     }
 
     /**
      * Listen for changes persisted against key on other tabs.
-     * Triggers callback when a change occurs, passing the following arguments.
+     * Triggers StorageCallback when a change occurs, passing the following arguments.
      *
      * value: the current value for key in local storage, parsed from the persisted JSON
      * old: the old value for key in local storage, parsed from the persisted JSON
      * url: the url for the tab where the modification came from
      *
      * @param key
-     * @param callback
+     * @param StorageCallback
      */
-    public static on<Type = any> (key: string, callback: Callback<Type>): void {
-        events.on(key, callback);
+    public static on<Type = any> (key: string, StorageCallback: StorageCallback<Type>): void {
+        events.on(key, StorageCallback);
     }
 
     /**
      * Listen ONCE for changes persisted against key on other tabs
-     * Triggers callback when a change occurs, passing the following arguments.
+     * Triggers StorageCallback when a change occurs, passing the following arguments.
      *
      * value: the current value for key in local storage, parsed from the persisted JSON
      * old: the old value for key in local storage, parsed from the persisted JSON
      * url: the url for the tab where the modification came from
      *
      * @param key
-     * @param callback
+     * @param StorageCallback
      */
-    public static once<Type = any> (key: string, callback: Callback<Type>): void {
-        events.once(key, callback);
+    public static once<Type = any> (key: string, StorageCallback: StorageCallback<Type>): void {
+        events.once(key, StorageCallback);
     }
 
     /**
@@ -123,12 +141,12 @@ export default class LocalStorage {
      *
      * @param key
      */
-    public static remove (key: string): void {
-        const old = LocalStorage.get(key);
+    public static remove<Type = any> (key: string): void {
+        const old = LocalStorage.get<Type>(key);
 
         localStorageAvailable ? ls.remove(key) : FileStorage.removeItem(key);
 
-        events.emit(key, undefined, old, localStorageAvailable ? window.location.toString() : process.cwd());
+        events.emit(key, old, undefined, localStorageAvailable ? window.location.toString() : process.cwd());
     }
 
     /**
@@ -138,10 +156,27 @@ export default class LocalStorage {
      * @param value
      */
     public static set<Type> (key: string, value: Type): void {
-        const old = LocalStorage.get(key);
+        const old = LocalStorage.get<Type>(key);
 
-        localStorageAvailable ? ls.set(key, value) : FileStorage.setItem(key, value);
+        localStorageAvailable ? ls.set<Type>(key, value) : FileStorage.setItem<Type>(key, value);
 
-        events.emit(key, value, old, localStorageAvailable ? window.location.toString() : process.cwd());
+        events.emit(key, old, value, localStorageAvailable ? window.location.toString() : process.cwd());
+    }
+
+    /**
+     * Sets the domain scope of the local storage on disk
+     *
+     * This prevents other applications using this library from stomping on the storage of others
+     *
+     * Note: For scope to apply, must be called before all other calls
+     *
+     * @param scope
+     */
+    public static domain (scope: string) {
+        if (!localStorageAvailable) {
+            FileStorage.domain(scope);
+        }
     }
 }
+
+export { LocalStorage };

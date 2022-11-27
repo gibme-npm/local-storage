@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import assert from 'assert';
-import { describe, it } from 'mocha';
+import { describe, it, before, after } from 'mocha';
 import LocalStorage from '../src/local-storage';
 
 describe('Local Storage Tests', () => {
@@ -27,8 +27,27 @@ describe('Local Storage Tests', () => {
     const value = { value: true, value1: 9, value3: 9.4, value4: 'test' };
 
     before(() => {
+        LocalStorage.domain('unit-tests');
         LocalStorage.clear();
         LocalStorage.set('test', 1);
+    });
+
+    after(() => {
+        LocalStorage.set('unit_tests', true);
+    });
+
+    it('Path', function () {
+        if (LocalStorage.isBrowserLocalStorage) {
+            return this.skip();
+        }
+
+        assert(LocalStorage.path !== undefined);
+    });
+
+    it('Id', () => {
+        const id = LocalStorage.id(key);
+
+        assert(LocalStorage.isBrowserLocalStorage ? id === key : id !== key);
     });
 
     it('Set', () => {

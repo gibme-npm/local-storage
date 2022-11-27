@@ -23,6 +23,7 @@ import { tmpdir } from 'os';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { createHash } from 'crypto';
 
+/** @ignore */
 let localStoragePath = (() => {
     const path = resolve(`${tmpdir()}/localstorage`);
 
@@ -33,13 +34,17 @@ let localStoragePath = (() => {
     return path;
 })();
 
+/** @ignore */
+let baseLocalStoragePath = localStoragePath;
+
+/** @ignore */
 const digest = (key: string): string => {
     return createHash('sha512')
         .update(key)
         .digest('hex');
 };
 
-export default class FileStorage {
+export default abstract class FileStorage {
     /**
      * Retrieves the file storage path
      *
@@ -57,6 +62,21 @@ export default class FileStorage {
      */
     public static set path (value: string) {
         localStoragePath = resolve(value);
+
+        if (!existsSync(localStoragePath)) {
+            mkdirSync(localStoragePath);
+        }
+
+        baseLocalStoragePath = localStoragePath;
+    }
+
+    /**
+     * Retrieves the underlying key ID for the specified key
+     *
+     * @param key
+     */
+    public static id (key: string): string {
+        return digest(key);
     }
 
     /**
@@ -65,7 +85,7 @@ export default class FileStorage {
      * @param key
      * @param noThrow
      */
-    public static getItem <Type> (key: string, noThrow = true): Type | undefined {
+    public static getItem<Type> (key: string, noThrow = true): Type | undefined {
         try {
             const data = readFileSync(resolve(`${localStoragePath}/${digest(key)}`));
 
@@ -74,6 +94,23 @@ export default class FileStorage {
             if (!noThrow) {
                 throw error;
             }
+        }
+    }
+
+    /**
+     * Sets the scope of the local storage on disk
+     *
+     * This prevents other applications using this library from stomping on the storage of others
+     *
+     * Note: For scope to apply, must be called before all other calls
+     *
+     * @param scope
+     */
+    public static domain (scope: string) {
+        localStoragePath = resolve(`${baseLocalStoragePath}/${scope}`);
+
+        if (!existsSync(localStoragePath)) {
+            mkdirSync(localStoragePath);
         }
     }
 
