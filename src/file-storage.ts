@@ -22,7 +22,9 @@ import { resolve } from 'path';
 import { tmpdir } from 'os';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { createHash } from 'crypto';
-import { localStorageAvailable } from './local-storage';
+
+/** @ignore */
+const localStorageAvailable = !!(global && global.localStorage);
 
 let localStoragePath = '';
 

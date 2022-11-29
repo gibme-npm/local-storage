@@ -23,7 +23,7 @@ import { EventEmitter } from 'events';
 import FileStorage from './file-storage';
 
 /** @ignore */
-export const localStorageAvailable = !!(global && global.localStorage);
+const localStorageAvailable = !!(global && global.localStorage);
 
 /** @ignore */
 const events = new EventEmitter();
