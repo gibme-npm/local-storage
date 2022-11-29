@@ -1,6 +1,6 @@
 {
   "name": "@gibme/local-storage",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A simple local-storage helper",
   "main": "dist/local-storage.js",
   "types": "dist/local-storage.d.ts",

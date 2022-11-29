@@ -22,17 +22,22 @@ import { resolve } from 'path';
 import { tmpdir } from 'os';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
 import { createHash } from 'crypto';
+import { localStorageAvailable } from './local-storage';
+
+let localStoragePath = '';
 
 /** @ignore */
-let localStoragePath = (() => {
-    const path = resolve(`${tmpdir()}/localstorage`);
+if (!localStorageAvailable) {
+    localStoragePath = (() => {
+        const path = resolve(`${tmpdir()}/localstorage`);
 
-    if (!existsSync(path)) {
-        mkdirSync(path);
-    }
+        if (!existsSync(path)) {
+            mkdirSync(path);
+        }
 
-    return path;
-})();
+        return path;
+    })();
+}
 
 /** @ignore */
 let baseLocalStoragePath = localStoragePath;
