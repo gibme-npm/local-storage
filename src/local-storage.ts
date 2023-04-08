@@ -21,6 +21,7 @@
 import * as ls from 'local-storage';
 import { EventEmitter } from 'events';
 import FileStorage from './file-storage';
+import { createHash } from 'crypto';
 
 /** @ignore */
 const localStorageAvailable = !!(global && global.localStorage);
@@ -60,12 +61,14 @@ export default abstract class LocalStorage {
     }
 
     /**
-     * Returns the underlying key ID for the specified key
+     * Retrieves the underlying key ID for the specified key
      *
      * @param key
      */
-    public static id (key: string): string {
-        return localStorageAvailable ? key : FileStorage.id(key);
+    public static id<KeyType = any> (key: KeyType): string {
+        return createHash('sha512')
+            .update(JSON.stringify(key))
+            .digest('hex');
     }
 
     /**
@@ -78,18 +81,28 @@ export default abstract class LocalStorage {
     /**
      * Returns if the local storage has the key available
      *
+     * @deprecated
      * @param key
      */
-    public static has<Type = any> (key: string): boolean {
-        return typeof LocalStorage.get<Type>(key) !== 'undefined';
+    public static has<KeyType = any> (key: KeyType): boolean {
+        return typeof LocalStorage.get(key) !== 'undefined';
+    }
+
+    /**
+     * Returns if the local storage has the key available
+     *
+     * @param key
+     */
+    public static includes<KeyType = any> (key: KeyType): boolean {
+        return typeof LocalStorage.get(key) !== 'undefined';
     }
 
     /**
      * Retrieves the value for the specified key if it exists in the local storage
      * @param key
      */
-    public static get<Type = any> (key: string): Type | undefined {
-        return localStorageAvailable ? ls.get<Type>(key) : FileStorage.getItem<Type>(key);
+    public static get<ValueType = any, KeyType = any> (key: KeyType): ValueType | undefined {
+        return localStorageAvailable ? ls.get<ValueType>(LocalStorage.id(key)) : FileStorage.getItem<ValueType>(key);
     }
 
     /**
@@ -102,8 +115,11 @@ export default abstract class LocalStorage {
      * @param key
      * @param StorageCallback
      */
-    public static off<Type = any> (key: string, StorageCallback: StorageCallback<Type>): void {
-        events.off(key, StorageCallback);
+    public static off<ValueType = any, KeyType = any> (
+        key: KeyType,
+        StorageCallback: StorageCallback<ValueType>
+    ): void {
+        events.off(LocalStorage.id(key), StorageCallback);
     }
 
     /**
@@ -117,8 +133,11 @@ export default abstract class LocalStorage {
      * @param key
      * @param StorageCallback
      */
-    public static on<Type = any> (key: string, StorageCallback: StorageCallback<Type>): void {
-        events.on(key, StorageCallback);
+    public static on<ValueType = any, KeyType = any> (
+        key: KeyType,
+        StorageCallback: StorageCallback<ValueType>
+    ): void {
+        events.on(LocalStorage.id(key), StorageCallback);
     }
 
     /**
@@ -132,8 +151,11 @@ export default abstract class LocalStorage {
      * @param key
      * @param StorageCallback
      */
-    public static once<Type = any> (key: string, StorageCallback: StorageCallback<Type>): void {
-        events.once(key, StorageCallback);
+    public static once<ValueType = any, KeyType = any> (
+        key: KeyType,
+        StorageCallback: StorageCallback<ValueType>
+    ): void {
+        events.once(LocalStorage.id(key), StorageCallback);
     }
 
     /**
@@ -141,12 +163,14 @@ export default abstract class LocalStorage {
      *
      * @param key
      */
-    public static remove<Type = any> (key: string): void {
-        const old = LocalStorage.get<Type>(key);
+    public static remove<ValueType = any, KeyType = any> (key: KeyType): void {
+        const old = LocalStorage.get<ValueType>(key);
 
-        localStorageAvailable ? ls.remove(key) : FileStorage.removeItem(key);
+        const id = LocalStorage.id(key);
 
-        events.emit(key, old, undefined, localStorageAvailable ? window.location.toString() : process.cwd());
+        localStorageAvailable ? ls.remove(id) : FileStorage.removeItem(key);
+
+        events.emit(id, old, undefined, localStorageAvailable ? window.location.toString() : process.cwd());
     }
 
     /**
@@ -155,12 +179,14 @@ export default abstract class LocalStorage {
      * @param key
      * @param value
      */
-    public static set<Type> (key: string, value: Type): void {
-        const old = LocalStorage.get<Type>(key);
+    public static set<ValueType = any, KeyType = any> (key: KeyType, value: ValueType): void {
+        const old = LocalStorage.get<ValueType>(key);
 
-        localStorageAvailable ? ls.set<Type>(key, value) : FileStorage.setItem<Type>(key, value);
+        const id = LocalStorage.id(key);
 
-        events.emit(key, old, value, localStorageAvailable ? window.location.toString() : process.cwd());
+        localStorageAvailable ? ls.set(id, value) : FileStorage.setItem(key, value);
+
+        events.emit(id, old, value, localStorageAvailable ? window.location.toString() : process.cwd());
     }
 
     /**

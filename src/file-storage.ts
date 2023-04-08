@@ -44,13 +44,6 @@ if (!localStorageAvailable) {
 /** @ignore */
 let baseLocalStoragePath = localStoragePath;
 
-/** @ignore */
-const digest = (key: string): string => {
-    return createHash('sha512')
-        .update(key)
-        .digest('hex');
-};
-
 export default abstract class FileStorage {
     /**
      * Retrieves the file storage path
@@ -82,8 +75,10 @@ export default abstract class FileStorage {
      *
      * @param key
      */
-    public static id (key: string): string {
-        return digest(key);
+    public static id<KeyType = any> (key: KeyType): string {
+        return createHash('sha512')
+            .update(JSON.stringify(key))
+            .digest('hex');
     }
 
     /**
@@ -92,9 +87,11 @@ export default abstract class FileStorage {
      * @param key
      * @param noThrow
      */
-    public static getItem<Type> (key: string, noThrow = true): Type | undefined {
+    public static getItem<ValueType = any, KeyType = any> (key: KeyType, noThrow = true): ValueType | undefined {
         try {
-            const data = readFileSync(resolve(`${localStoragePath}/${digest(key)}`));
+            const id = FileStorage.id(key);
+
+            const data = readFileSync(resolve(`${localStoragePath}/${id}`));
 
             return JSON.parse(data.toString());
         } catch (error: any) {
@@ -127,13 +124,15 @@ export default abstract class FileStorage {
      * @param key
      * @param value
      */
-    public static setItem<Type> (key: string, value: Type): void {
+    public static setItem<ValueType = any, KeyType = any> (key: KeyType, value: ValueType): void {
         if (!existsSync(localStoragePath)) {
             mkdirSync(localStoragePath);
         }
 
+        const id = FileStorage.id(key);
+
         writeFileSync(
-            resolve(`${localStoragePath}/${digest(key)}`),
+            resolve(`${localStoragePath}/${id}`),
             JSON.stringify(value, undefined, 4));
     }
 
@@ -142,9 +141,11 @@ export default abstract class FileStorage {
      *
      * @param key
      */
-    public static removeItem (key: string): void {
-        if (existsSync(resolve(`${localStoragePath}/${digest(key)}`))) {
-            rmSync(resolve(`${localStoragePath}/${digest(key)}`));
+    public static removeItem<KeyType = any> (key: KeyType): void {
+        const id = FileStorage.id(key);
+
+        if (existsSync(resolve(`${localStoragePath}/${id}`))) {
+            rmSync(resolve(`${localStoragePath}/${id}`));
         }
     }
 

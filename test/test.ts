@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import assert from 'assert';
+import * as assert from 'assert';
 import { describe, it, before, after } from 'mocha';
 import LocalStorage from '../src/local-storage';
 
@@ -41,19 +41,23 @@ describe('Local Storage Tests', () => {
             return this.skip();
         }
 
-        assert(LocalStorage.path !== undefined);
+        assert.notEqual(LocalStorage.path, undefined);
     });
 
     it('Id', () => {
         const id = LocalStorage.id(key);
 
-        assert(LocalStorage.isBrowserLocalStorage ? id === key : id !== key);
+        if (LocalStorage.isBrowserLocalStorage) {
+            assert.equal(id, key);
+        } else {
+            assert.notEqual(id, key);
+        }
     });
 
     it('Set', () => {
         LocalStorage.set(key, value);
 
-        assert(LocalStorage.has(key));
+        assert.equal(LocalStorage.includes(key), true);
     });
 
     it('Get', () => {
@@ -65,12 +69,12 @@ describe('Local Storage Tests', () => {
     it('Remove', () => {
         LocalStorage.remove('test');
 
-        assert(!LocalStorage.has('test'));
+        assert.equal(LocalStorage.includes('test'), false);
     });
 
     it('Clear', () => {
         LocalStorage.clear();
 
-        assert(!LocalStorage.has(key));
+        assert.equal(LocalStorage.includes(key), false);
     });
 });
