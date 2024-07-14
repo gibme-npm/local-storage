@@ -1,4 +1,4 @@
-// Copyright (c) 2021-2022, Brandon Lehmann <brandonlehmann@gmail.com>
+// Copyright (c) 2021-2024, Brandon Lehmann <brandonlehmann@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,7 @@
 import { resolve } from 'path';
 import { tmpdir } from 'os';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
-import { createHash } from 'crypto';
+import { sha512 } from 'js-sha512';
 
 /** @ignore */
 const localStorageAvailable = !!(global && global.localStorage);
@@ -76,9 +76,9 @@ export default abstract class FileStorage {
      * @param key
      */
     public static id<KeyType = any> (key: KeyType): string {
-        return createHash('sha512')
+        return sha512.create()
             .update(JSON.stringify(key))
-            .digest('hex');
+            .hex();
     }
 
     /**
