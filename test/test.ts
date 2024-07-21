@@ -20,7 +20,7 @@
 
 import * as assert from 'assert';
 import { describe, it, before, after } from 'mocha';
-import LocalStorage from '../src/local-storage';
+import LocalStorage from '../src';
 
 describe('Local Storage Tests', () => {
     const key = 'test_key';
