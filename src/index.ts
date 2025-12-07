@@ -75,7 +75,11 @@ export default abstract class LocalStorage {
      * Clears the local storage
      */
     public static clear () {
-        localStorageAvailable ? ls.clear() : FileStorage.clear();
+        if (localStorageAvailable) {
+            ls.clear();
+        } else {
+            FileStorage.clear();
+        }
     }
 
     /**
@@ -168,7 +172,11 @@ export default abstract class LocalStorage {
 
         const id = LocalStorage.id(key);
 
-        localStorageAvailable ? ls.remove(id) : FileStorage.removeItem(key);
+        if (localStorageAvailable) {
+            ls.remove(id);
+        } else {
+            FileStorage.removeItem(key);
+        }
 
         events.emit(id, old, undefined, localStorageAvailable ? window.location.toString() : process.cwd());
     }
@@ -184,7 +192,11 @@ export default abstract class LocalStorage {
 
         const id = LocalStorage.id(key);
 
-        localStorageAvailable ? ls.set(id, value) : FileStorage.setItem(key, value);
+        if (localStorageAvailable) {
+            ls.set(id, value);
+        } else {
+            FileStorage.setItem(key, value);
+        }
 
         events.emit(id, old, value, localStorageAvailable ? window.location.toString() : process.cwd());
     }
