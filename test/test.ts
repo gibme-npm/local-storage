@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 import assert from 'assert';
-import { describe, it, before, after } from 'mocha';
+import { describe, it, before, after } from 'node:test';
 import LocalStorage from '../src';
 
 describe('Local Storage Tests', () => {
@@ -36,9 +36,9 @@ describe('Local Storage Tests', () => {
         LocalStorage.set('unit_tests', true);
     });
 
-    it('Path', function () {
+    it('Path', { skip: false }, async (t) => {
         if (LocalStorage.isBrowserLocalStorage) {
-            return this.skip();
+            return t.skip('Browser local storage does not have a path');
         }
 
         assert.notEqual(LocalStorage.path, undefined);
